@@ -1,0 +1,6 @@
+click
+pyxdg
+winshell
+swinlnk
+pillow
+cairosvg
