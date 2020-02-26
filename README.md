@@ -39,7 +39,7 @@ running in a vanilla WSL installation.
 
 ## Installing and Running
 
-    pip install git+https://github.com/cascadium/wsl-windows-toolbar-launcher#egg=wsl-windows-toolbar-launcher
+    pip install git+https://github.com/cascadium/wsl-windows-toolbar-launcher#egg=wsl-windows-toolbar
     wsl-windows-toolbar.py
 
 After installation, right click on your toolbar, go to `Toolbars -> New toolbar...` and select `%USERPROFILE%\.config\wsl-windows-toolbar-launcher\menus\WSL` as the target folder.
