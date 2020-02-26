@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import logging
@@ -7,19 +7,37 @@ import subprocess
 import sys
 
 import click
-from enum import Enum, auto
 from PIL import Image
-from cairosvg import svg2png
-
 # Set up default logging format and level
 import xdg.Menu
 import xdg.IconTheme
 from click._compat import raw_input
 
+DEFAULT_HOST_MOUNTPOINT = "/mnt/c"
+with open("/proc/mounts") as mount_fh:
+    for mount in mount_fh.readlines():
+        fs, mp, typ, opts, dump, pas = mount.rstrip().split()
+        if typ in ["drvfs", "9p"]:
+            DEFAULT_HOST_MOUNTPOINT = mp
+
+# WINDOWS_USERPROFILE
+WINDOWS_USERPROFILE = subprocess.check_output(
+    ["cmd.exe", "/C", "echo", "%USERPROFILE%"],
+    stderr=subprocess.DEVNULL
+).rstrip().decode("utf-8")
+WSL_USERPROFILE = subprocess.check_output(
+    ["wslpath", WINDOWS_USERPROFILE]
+).rstrip().decode("utf-8")
+
+try:
+    from cairosvg import svg2png
+except ImportError:
+    pass
+
 DEFAULT_INSTALL_DIRECTORY = os.path.join(
-    os.sep, "c", "Users", os.environ['USER'], ".config", "wsl-windows-toolbar-launcher/menus")
+    WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/menus")
 DEFAULT_METADATA_DIRECTORY = os.path.join(
-    os.sep, "c", "Users", os.environ['USER'], ".config", "wsl-windows-toolbar-launcher/metadata")
+    WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/metadata")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s[%(levelname)s]: %(message)s')
 logger = logging.getLogger(__name__)
@@ -151,15 +169,15 @@ def cli(install_directory,
     shortcuts_installed = 0
     for path, entry in entries.items():
         logger.info("Creating menu item for: %s", path)
-        exec = entry.getExec()
-        if "exo-open" in exec:
-            logger.warning("Cannot add %s [%s] - exo-open doesn't currently work via this launcher method.", path, exec)
+        exec_cmd = entry.getExec()
+        if "exo-open" in exec_cmd:
+            logger.warning("Cannot add %s [%s] - exo-open doesn't currently work via this launcher method.", path, exec_cmd)
             continue
 
         # These parts aren't relevant for menu launcher so prune out from the command
         to_strip = ["%u", "%U", "%F"]
         for substr in to_strip:
-            exec = exec.replace(substr, "")
+            exec_cmd = exec_cmd.replace(substr, "")
 
         # Carve the way for the shortcut
         shortcut_path = os.path.join(install_directory, "%s.lnk" % path)
@@ -175,7 +193,7 @@ def cli(install_directory,
             logger.warning("Failed to find icon for %s", path)
             ico_file_winpath = None
 
-        arguments = "-d %s -u %s -- source ~/.bashrc ; %s" % (distribution, user, exec)
+        arguments = "-d %s -u %s -- source ~/.bashrc ; %s" % (distribution, user, exec_cmd)
         windows_lnk = create_shortcut(
             shortcut_path,
             "wscript",
