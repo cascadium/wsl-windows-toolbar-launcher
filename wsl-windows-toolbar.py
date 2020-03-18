@@ -246,7 +246,7 @@ def create_windows_icon(icon, metadata_prefix):
 
         try:
             if extension == ".png":
-                shutil.copy(icon_path, png_file)
+                shutil.copyfile(icon_path, png_file)
             elif extension == ".svg":
                 with open(icon_path, 'rb') as f:
                     svg2png(file_obj=f, write_to=png_file)
