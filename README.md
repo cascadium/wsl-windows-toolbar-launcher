@@ -4,7 +4,7 @@ This script will create a Windows toolbar launcher for an underlying WSL install
 can be used to fire up linux native applications directly from Windows via the standard
 Windows toolbar, like this:
 
-![Alt Text](assets/demo.gif)
+![Demo](assets/demo.gif)
 
 It's particularly cool because WSL 2 is coming which is unlocking unprecedented performance
 and compatibility improvements, so this will literally bring the full suite of Linux GUI
@@ -98,15 +98,30 @@ planning on fixing this. You'll need something like this to extract the correct 
 
     export DISPLAY=$(grep -m 1 nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 
-However, in addition to this, you also need to disable the windows firewall for the WSL network.
-And to make things worse, it doesn't persist on reboot (must be run as admin):
+Then you need to worry about the firewall. WSL comes up as a public network, but I wouldn't recommend
+allowing all public network traffic to access your X server. So instead, you can go ahead and select
+defaults when this sort of prompt comes up:
+
+![Security Alert](assets/security_alert.png)
+
+Now, irritatingly this will actively add a block rule (rather than simply not add an allow rule) for public networks
+which you will need to disable for the next step by going into Windows Defender Firewall -> Inbound Rules and
+**disabling this block rule for TCP on the Public Network**.
+
+If you don't do the above step, the Block rule will take precedence over the Allow allow rule and you won't get through.
+
+Now, right click on Inbound Rules and select `New Rule...`, select TCP port 6000 (most likely) and select defaults. This
+will open up your public network for this port... which is also not what you want. What you want is to only allow traffic
+from the WSL subnet. So refresh the list, scroll to your recently created name, right click and go to properties. Now
+under `Scope`, go to **Remote IP address**, Select `These IP addresses` and add in `172.22.64.0/20` to limit the subnets
+which can access this port to the WSL subnet. It should look something like this:
+
+![WSL Subnet Firewall Rule](assets/firewall_rule_wsl_subnet.png)
+
+Alternatively you *could* just disable the entire firewall for WSL, but that adds a firewall warning that constantly
+irritates me:
 
     powershell.exe -Command "Set-NetFirewallProfile -DisabledInterfaceAliases \"vEthernet (WSL)\""
-
-If anyone has an alternative way to make
-this work automatically, I'd love to hear it, because WSL2 is amazing (though still in preview),
-but this functionality is annoying. Not just for this, but for accessing any windows native TCP
-services from WSL (e.g. database).
 
 ### Application X not working
 
