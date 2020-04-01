@@ -98,6 +98,8 @@ planning on fixing this. You'll need something like this to extract the correct 
 
     export DISPLAY=$(grep -m 1 nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 
+### Firewall Rules
+
 Then you need to worry about the firewall. WSL comes up as a public network, but I wouldn't recommend
 allowing all public network traffic to access your X server. So instead, you can go ahead and select
 defaults when this sort of prompt comes up:
