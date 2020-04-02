@@ -115,7 +115,7 @@ If you don't do the above step, the Block rule will take precedence over the All
 Now, right click on Inbound Rules and select `New Rule...`, select TCP port 6000 (most likely) and select defaults. This
 will open up your public network for this port... which is also not what you want. What you want is to only allow traffic
 from the WSL subnet. So refresh the list, scroll to your recently created name, right click and go to properties. Now
-under `Scope`, go to **Remote IP address**, Select `These IP addresses` and add in `172.22.64.0/20` to limit the subnets
+under `Scope`, go to **Remote IP address**, Select `These IP addresses` and add in `172.0.0.0/8` to limit the subnets
 which can access this port to the WSL subnet. It should look something like this:
 
 ![WSL Subnet Firewall Rule](assets/firewall_rule_wsl_subnet.png)
