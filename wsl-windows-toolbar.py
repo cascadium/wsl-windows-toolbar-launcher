@@ -137,7 +137,7 @@ def cli(install_directory,
     # Debug information
     logger.info("distribution = %s", distribution)
     logger.info("user = %s", user)
-    logger.info("confirm_yes t= %s", confirm_yes)
+    logger.info("confirm_yes = %s", confirm_yes)
     logger.info("menu_file = %s", menu_file.name)
     logger.info("wsl_executable = %s", wsl_executable)
     logger.info("target_name = %s", target_name)
@@ -230,11 +230,17 @@ def cli(install_directory,
             alternative_theme=alternative_theme
         )
 
+        # Create a little batch file launcher for the executable
+        launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
         arguments = "-d %s -u %s -- source ~/.bashrc ; %s" % (distribution, user, exec_cmd)
+        with open(launcher_path, mode="w") as script_handle:
+            script_handle.write("%s %s" % (wsl_executable, arguments))
+        launcher_path_win = get_windows_path_from_wsl_path(launcher_path)
+
         windows_lnk = create_shortcut(
             shortcut_path,
             "wscript",
-            '%s "%s %s"' % (silent_launcher_script_file_win, wsl_executable, arguments.replace('"', "'")),
+            '"%s" "%s"' % (silent_launcher_script_file_win, launcher_path_win),
             entry.getComment(),
             ico_file_winpath
         )
