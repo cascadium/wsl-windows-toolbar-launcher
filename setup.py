@@ -26,9 +26,11 @@ setup(
         "winshell",
         "swinlnk",
         "pillow",
-        "python-magic"
+        "python-magic",
+        "jinja2"
     ],
     scripts=[
         'wsl-windows-toolbar.py'
-    ]
+    ],
+    include_package_data=True
 )

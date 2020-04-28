@@ -231,10 +231,26 @@ def cli(install_directory,
         )
 
         # Create a little batch file launcher for the executable
+        from jinja2 import FileSystemLoader, Environment
+
+        file_loader = FileSystemLoader('')
+        env = Environment(loader=file_loader)
+
+        template = env.get_template('launcher-template.j2')
+
         launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
-        arguments = "-d %s -u %s -- source ~/.bashrc ; %s" % (distribution, user, exec_cmd)
         with open(launcher_path, mode="w") as script_handle:
-            script_handle.write("%s %s" % (wsl_executable, arguments))
+            script_handle.write(
+                template.render(
+                    {
+                        "distribution": distribution,
+                        "user": user,
+                        "command": exec_cmd,
+                        "wsl": wsl_executable,
+                        "rcfile": "~/.bashrc"
+                    }
+                )
+            )
         launcher_path_win = get_windows_path_from_wsl_path(launcher_path)
 
         windows_lnk = create_shortcut(
