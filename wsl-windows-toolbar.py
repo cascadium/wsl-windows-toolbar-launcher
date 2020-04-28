@@ -5,6 +5,7 @@ import logging
 import shutil
 import subprocess
 import sys
+import magic
 
 import click
 from PIL import Image
@@ -29,11 +30,6 @@ WSL_USERPROFILE = subprocess.check_output(
     ["wslpath", WINDOWS_USERPROFILE]
 ).rstrip().decode("utf-8")
 
-try:
-    from cairosvg import svg2png
-except ImportError:
-    pass
-
 DEFAULT_INSTALL_DIRECTORY = os.path.join(
     WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/menus")
 DEFAULT_METADATA_DIRECTORY = os.path.join(
@@ -41,6 +37,24 @@ DEFAULT_METADATA_DIRECTORY = os.path.join(
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s[%(levelname)s]: %(message)s')
 logger = logging.getLogger(__name__)
+
+# Default environment detection for optional extras
+has_cairosvg = False
+has_imagemagick = False
+
+try:
+    from cairosvg import svg2png
+    has_cairosvg = True
+except ImportError:
+    logger.warning("Could not find cairosvg - will not be able to convert svg ")
+    pass
+
+try:
+    if 'ImageMagick' in subprocess.check_output(["convert", "-version"]).rstrip().decode():
+        has_imagemagick = True
+except:
+    logger.warning("Could not find imagemagick - some xpm icons may not convert correctly")
+    pass
 
 
 @click.command()
@@ -92,6 +106,23 @@ logger = logging.getLogger(__name__)
               default="WSL",
               show_default=True,
               help="Name to give to the created installation (will be displayed in toolbar menu)")
+@click.option("--preferred-theme",
+              "-t",
+              type=str,
+              default="Adwaita",
+              show_default=True,
+              help="Preferred menu theme to use")
+@click.option("--alternative-theme",
+              "-T",
+              type=str,
+              default=[
+                  "Papirus",
+                  "Humanity",
+                  "elementary-xfce"
+              ],
+              show_default=True,
+              multiple=True,
+              help="Alternative menu themes to consider (pass multiple times)")
 def cli(install_directory,
         metadata_directory,
         distribution,
@@ -99,7 +130,9 @@ def cli(install_directory,
         confirm_yes,
         menu_file,
         wsl_executable,
-        target_name):
+        target_name,
+        preferred_theme,
+        alternative_theme):
 
     # Debug information
     logger.info("distribution = %s", distribution)
@@ -108,9 +141,11 @@ def cli(install_directory,
     logger.info("menu_file = %s", menu_file.name)
     logger.info("wsl_executable = %s", wsl_executable)
     logger.info("target_name = %s", target_name)
+    logger.info("has_imagemagick = %s", has_imagemagick)
+    logger.info("has_cairosvg = %s", has_cairosvg)
 
     # Check required tools are available
-    for exe in ["powershell.exe", "wscript.exe", "wslpath"]:
+    for exe in ["powershell.exe", "wscript.exe", "wslpath", "convert"]:
         # Just check for non zero return codes
         logger.debug("Checking availability of %s...", exe)
         try:
@@ -168,11 +203,12 @@ def cli(install_directory,
     # Create shortcut files
     shortcuts_installed = 0
     for path, entry in entries.items():
-        logger.info("Creating menu item for: %s", path)
         exec_cmd = entry.getExec()
         if "exo-open" in exec_cmd:
-            logger.warning("Cannot add %s [%s] - exo-open doesn't currently work via this launcher method.", path, exec_cmd)
+            logger.debug("Cannot add %s [%s] - exo-open doesn't currently work via this launcher method.", path, exec_cmd)
             continue
+
+        logger.info("Creating menu item for: %s", path)
 
         # These parts aren't relevant for menu launcher so prune out from the command
         to_strip = ["%u", "%U", "%F"]
@@ -187,11 +223,12 @@ def cli(install_directory,
         # Normalize the icon to a windows path so shortcut can find it
         icon = entry.getIcon()
         metadata_prefix = os.path.join(metadata_directory, "%s" % path)
-        if icon:
-            ico_file_winpath = create_windows_icon(icon, metadata_prefix)
-        else:
-            logger.warning("Failed to find icon for %s", path)
-            ico_file_winpath = None
+        ico_file_winpath = create_windows_icon(
+            icon if icon else entry.getName().lower(),
+            metadata_prefix,
+            preferred_theme=preferred_theme,
+            alternative_theme=alternative_theme
+        )
 
         arguments = "-d %s -u %s -- source ~/.bashrc ; %s" % (distribution, user, exec_cmd)
         windows_lnk = create_shortcut(
@@ -201,7 +238,7 @@ def cli(install_directory,
             entry.getComment(),
             ico_file_winpath
         )
-        logger.info("Created %s", windows_lnk)
+        logger.debug("Created %s", windows_lnk)
         shortcuts_installed += 1
 
     logger.info("Finished creating %d shortcuts!", shortcuts_installed)
@@ -236,26 +273,51 @@ def create_shortcut(link_file, executable, arguments=None, comment=None, icon_fi
     return windows_lnk
 
 
-def create_windows_icon(icon, metadata_prefix):
-    logger.debug("Creating icon files for: %s*", metadata_prefix)
+def create_windows_icon(icon,
+                        metadata_prefix,
+                        preferred_theme=None,
+                        alternative_theme=None):
+    logger.debug("Creating icon files for: %s, %s [%s]", icon, metadata_prefix, preferred_theme)
     os.makedirs(os.path.dirname(metadata_prefix), exist_ok=True)
-    icon_path = xdg.IconTheme.getIconPath(icon, theme="Adwaita")
+    icon_path = xdg.IconTheme.getIconPath(icon, theme=preferred_theme)
+    if not icon_path:
+        for icon_c in [icon, icon.lower()]:
+            if alternative_theme:
+                for theme in alternative_theme:
+                    logger.debug("Checking with theme: %s", theme)
+                    icon_path = xdg.IconTheme.getIconPath(icon_c, theme=theme)
+                    if icon_path:
+                        icon = icon_c
+                        logger.debug("Found icon path: %s for theme %s", icon_c, theme)
+                        break
+
     if icon_path:
         filename, extension = os.path.splitext(icon_path)
         png_file = metadata_prefix + ".png"
+        mime_type = magic.from_file(icon_path, mime=True)
 
         try:
-            if extension == ".png":
+            # Some icons appear to have the wrong extension on windows, so check mime type here too
+            if extension == ".png" or mime_type == "image/png":
                 shutil.copyfile(icon_path, png_file)
-            elif extension == ".svg":
+            elif has_cairosvg and (extension == ".svg" or mime_type == "image/svg"):
+                # Attempt with svg2png if available
                 with open(icon_path, 'rb') as f:
                     svg2png(file_obj=f, write_to=png_file)
             else:
+                # Attempt with PIL if available
                 img = Image.open(icon_path)
                 img.save(png_file)
-        except Exception:
-            logger.warning("Failed to create or find png file for %s - icon will not be available", icon_path)
-            png_file = None
+        except Exception as e:
+            if has_imagemagick:
+                logger.debug("Could not convert using python methods - falling back on imagemagick")
+                try:
+                    subprocess.check_output(["convert", icon_path, png_file])
+                    logger.debug("Converted %s to %s using imagemagick", icon_path, png_file)
+                except subprocess.CalledProcessError:
+                    logger.exception("Failed to create or find png file for %s - icon will not be available (%s: %s)",
+                                     icon_path, type(e).__name__, e)
+                    png_file = None
 
         if png_file:
             try:

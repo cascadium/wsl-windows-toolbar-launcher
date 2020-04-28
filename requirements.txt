@@ -4,3 +4,4 @@ winshell
 swinlnk
 pillow
 cairosvg
+python-magic

@@ -25,7 +25,8 @@ setup(
         "pyxdg",
         "winshell",
         "swinlnk",
-        "pillow"
+        "pillow",
+        "python-magic"
     ],
     scripts=[
         'wsl-windows-toolbar.py'
