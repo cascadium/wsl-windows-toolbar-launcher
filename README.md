@@ -28,7 +28,7 @@ To install:
 
 To run:
 
-    wsl-windows-toolbar.py
+    wsl-windows-toolbar
 
 After installation, right click on your toolbar, go to
 `Toolbars -> New toolbar...` and select
@@ -41,6 +41,10 @@ Note there are many options available with `--help` if you'd prefer to use alter
 
 If new software has been installed in the WSL environment, simply run the script again from the WSL environment to pick
 the new GUIs up.
+
+Notable changes:
+
+* Change in 0.3: Command is now `wsl-windows-toolbar` without the trailing `.py`.
 
 ## Advanced Usage / Options
 

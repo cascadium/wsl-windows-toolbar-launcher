@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="wsl-windows-toolbar",
-    version="0.2",
+    version="0.3",
     author="Frank Quinn",
     author_email="fquinn@cascadium.io",
     description="Adds linux GUI application menu to a windows toolbar",
@@ -29,8 +29,16 @@ setup(
         "python-magic",
         "jinja2"
     ],
-    scripts=[
-        'wsl-windows-toolbar.py'
+    packages=[
+        "wsl_windows_toolbar"
     ],
-    include_package_data=True
+    package_dir={
+        "wsl_windows_toolbar": ""
+    },
+    package_data={
+        'wsl_windows_toolbar': ["wsl-windows-toolbar-template.j2"]
+    },
+    entry_points={
+        'console_scripts': ['wsl-windows-toolbar=wsl_windows_toolbar.wsl_windows_toolbar:cli'],
+    }
 )

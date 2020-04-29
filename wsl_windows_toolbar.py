@@ -13,6 +13,7 @@ from PIL import Image
 import xdg.Menu
 import xdg.IconTheme
 from click._compat import raw_input
+from jinja2 import Environment, PackageLoader
 
 DEFAULT_HOST_MOUNTPOINT = "/mnt/c"
 with open("/proc/mounts") as mount_fh:
@@ -200,6 +201,11 @@ def cli(install_directory,
     # Build windows path for the launcher script
     silent_launcher_script_file_win = get_windows_path_from_wsl_path(silent_launcher_script_file)
 
+    # Load in the template which is used to generate the launcher script
+    loader = PackageLoader('wsl_windows_toolbar', package_path='')
+    env = Environment(loader=loader)
+    template = env.get_template('wsl-windows-toolbar-template.j2')
+
     # Create shortcut files
     shortcuts_installed = 0
     for path, entry in entries.items():
@@ -231,13 +237,6 @@ def cli(install_directory,
         )
 
         # Create a little batch file launcher for the executable
-        from jinja2 import FileSystemLoader, Environment
-
-        file_loader = FileSystemLoader('')
-        env = Environment(loader=file_loader)
-
-        template = env.get_template('launcher-template.j2')
-
         launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
         with open(launcher_path, mode="w") as script_handle:
             script_handle.write(
