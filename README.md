@@ -75,6 +75,19 @@ Options:
   --help                         Show this message and exit.
 ```
 
+### Launcher Templates
+
+The loader process involves using wscript to launch a batch file (to keep the shorcut command
+length down). There is a jinja template which defines this script which defaults to
+`wsl-windows-toolbar-template.j2` and accepts the following possible variables passed
+through from the script:
+
+* `distribution`: The distribution selected in the script
+* `user`: The user selected in the script
+* `command`: The individual command for each launcher entry in WSL environment (e.g. `xterm`)
+* `wsl`: The wsl executable discovered
+* `rcfile`: The rc file (e.g. `.bashrc`) to source prior to launch selected in the script
+
 ## Troubleshooting
 
 ### No applications launching
