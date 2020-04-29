@@ -13,7 +13,7 @@ from PIL import Image
 import xdg.Menu
 import xdg.IconTheme
 from click._compat import raw_input
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, FileSystemLoader
 
 DEFAULT_HOST_MOUNTPOINT = "/mnt/c"
 with open("/proc/mounts") as mount_fh:
@@ -124,6 +124,18 @@ except:
               show_default=True,
               multiple=True,
               help="Alternative menu themes to consider (pass multiple times)")
+@click.option("--jinja-template",
+              "-j",
+              type=click.File('r'),
+              default=None,
+              show_default=False,
+              help="Optional Jinja template to use instead of the inbuilt default (advanced users only)")
+@click.option("--rc-file",
+              "-r",
+              type=click.File('r'),
+              default=os.path.expanduser("~/.bashrc"),
+              show_default=False,
+              help="Optional rc file to source prior to launching the command instead of ~/.bashrc")
 def cli(install_directory,
         metadata_directory,
         distribution,
@@ -133,7 +145,9 @@ def cli(install_directory,
         wsl_executable,
         target_name,
         preferred_theme,
-        alternative_theme):
+        alternative_theme,
+        jinja_template,
+        rc_file):
 
     # Debug information
     logger.info("distribution = %s", distribution)
@@ -142,6 +156,10 @@ def cli(install_directory,
     logger.info("menu_file = %s", menu_file.name)
     logger.info("wsl_executable = %s", wsl_executable)
     logger.info("target_name = %s", target_name)
+    logger.info("preferred_theme = %s", preferred_theme)
+    logger.info("alternative_theme = %s", alternative_theme)
+    logger.info("jinja_template = %s", jinja_template.name)
+    logger.info("rc_file = %s", rc_file.name)
     logger.info("has_imagemagick = %s", has_imagemagick)
     logger.info("has_cairosvg = %s", has_cairosvg)
 
@@ -193,7 +211,7 @@ def cli(install_directory,
         try:
             with open(silent_launcher_script_file, "w") as lsf:
                 # If this gets more complicated, we could make this a resource, but at one line, this is fine
-                lsf.write('CreateObject("Wscript.Shell").Run "" & WScript.Arguments(0) & "", 0, False')
+                lsf.write('CreateObject("Wscript.Shell").Run """" & WScript.Arguments(0) & """", 0, False')
         except Exception:
             logger.error("Could not create %s", silent_launcher_script_file)
             sys.exit(os.EX_IOERR)
@@ -202,9 +220,14 @@ def cli(install_directory,
     silent_launcher_script_file_win = get_windows_path_from_wsl_path(silent_launcher_script_file)
 
     # Load in the template which is used to generate the launcher script
-    loader = PackageLoader('wsl_windows_toolbar', package_path='')
-    env = Environment(loader=loader)
-    template = env.get_template('wsl-windows-toolbar-template.j2')
+    if not jinja_template:
+        # Default load from package
+        env = Environment(loader=PackageLoader('wsl_windows_toolbar', package_path=''))
+        template = env.get_template("wsl-windows-toolbar-template.j2")
+    else:
+        # Optionally load from custom filesystem location
+        env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(jinja_template.name))))
+        template = env.get_template(os.path.basename(jinja_template.name))
 
     # Create shortcut files
     shortcuts_installed = 0
@@ -246,7 +269,7 @@ def cli(install_directory,
                         "user": user,
                         "command": exec_cmd,
                         "wsl": wsl_executable,
-                        "rcfile": "~/.bashrc"
+                        "rcfile": rc_file.name
                     }
                 )
             )
