@@ -36,6 +36,22 @@ DEFAULT_INSTALL_DIRECTORY = os.path.join(
 DEFAULT_METADATA_DIRECTORY = os.path.join(
     WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/metadata")
 
+FREEDESKTOP_FIELD_CODES = [
+    "%f",
+    "%F",
+    "%u",
+    "%U",
+    "%d",
+    "%D",
+    "%n",
+    "%N",
+    "%i",
+    "%c",
+    "%k",
+    "%v",
+    "%m"
+]
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s[%(levelname)s]: %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -124,8 +140,14 @@ except:
               show_default=True,
               multiple=True,
               help="Alternative menu themes to consider (pass multiple times)")
-@click.option("--jinja-template",
+@click.option("--jinja-template-batch",
               "-j",
+              type=click.File('r'),
+              default=None,
+              show_default=False,
+              help="Optional Jinja template to use instead of the inbuilt default (advanced users only)")
+@click.option("--jinja-template-shell",
+              "-J",
               type=click.File('r'),
               default=None,
               show_default=False,
@@ -146,7 +168,8 @@ def cli(install_directory,
         target_name,
         preferred_theme,
         alternative_theme,
-        jinja_template,
+        jinja_template_batch,
+        jinja_template_shell,
         rc_file):
 
     # Debug information
@@ -158,7 +181,8 @@ def cli(install_directory,
     logger.info("target_name = %s", target_name)
     logger.info("preferred_theme = %s", preferred_theme)
     logger.info("alternative_theme = %s", alternative_theme)
-    logger.info("jinja_template = %s", jinja_template.name)
+    logger.info("jinja_template_batch = %s", jinja_template_batch.name if jinja_template_batch else None)
+    logger.info("jinja_template_shell = %s", jinja_template_shell.name if jinja_template_shell else None)
     logger.info("rc_file = %s", rc_file.name)
     logger.info("has_imagemagick = %s", has_imagemagick)
     logger.info("has_cairosvg = %s", has_cairosvg)
@@ -220,28 +244,25 @@ def cli(install_directory,
     silent_launcher_script_file_win = get_windows_path_from_wsl_path(silent_launcher_script_file)
 
     # Load in the template which is used to generate the launcher script
-    if not jinja_template:
+    if not jinja_template_batch:
         # Default load from package
         env = Environment(loader=PackageLoader('wsl_windows_toolbar', package_path=''))
-        template = env.get_template("wsl-windows-toolbar-template.j2")
+        batch_template = env.get_template("wsl-windows-toolbar-template.bat.j2")
+        shell_template = env.get_template("wsl-windows-toolbar-template.sh.j2")
     else:
         # Optionally load from custom filesystem location
-        env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(jinja_template.name))))
-        template = env.get_template(os.path.basename(jinja_template.name))
+        env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(jinja_template_batch.name))))
+        batch_template = env.get_template(os.path.basename(jinja_template_batch.name))
+        shell_template = env.get_template(os.path.basename(jinja_template_shell.name))
 
     # Create shortcut files
     shortcuts_installed = 0
     for path, entry in entries.items():
-        exec_cmd = entry.getExec()
-        if "exo-open" in exec_cmd:
-            logger.debug("Cannot add %s [%s] - exo-open doesn't currently work via this launcher method.", path, exec_cmd)
-            continue
-
         logger.info("Creating menu item for: %s", path)
+        exec_cmd = entry.getExec()
 
         # These parts aren't relevant for menu launcher so prune out from the command
-        to_strip = ["%u", "%U", "%F"]
-        for substr in to_strip:
+        for substr in FREEDESKTOP_FIELD_CODES:
             exec_cmd = exec_cmd.replace(substr, "")
 
         # Carve the way for the shortcut
@@ -259,26 +280,32 @@ def cli(install_directory,
             alternative_theme=alternative_theme
         )
 
+        shell_launcher_path = os.path.join(metadata_directory, "%s.sh" % path)
+        template_dict = {
+            "distribution": distribution,
+            "user": user,
+            "command": exec_cmd,
+            "wsl": wsl_executable,
+            "rcfile": rc_file.name,
+            "launch_script": shell_launcher_path
+        }
+
+        # Create a little shell launcher for the executable
+        with open(shell_launcher_path, mode="w") as script_handle:
+            script_handle.write(shell_template.render(template_dict))
+        # Make executable
+        os.chmod(shell_launcher_path, 509)
+
         # Create a little batch file launcher for the executable
-        launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
-        with open(launcher_path, mode="w") as script_handle:
-            script_handle.write(
-                template.render(
-                    {
-                        "distribution": distribution,
-                        "user": user,
-                        "command": exec_cmd,
-                        "wsl": wsl_executable,
-                        "rcfile": rc_file.name
-                    }
-                )
-            )
-        launcher_path_win = get_windows_path_from_wsl_path(launcher_path)
+        batch_launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
+        with open(batch_launcher_path, mode="w") as script_handle:
+            script_handle.write(batch_template.render(template_dict))
+        batch_launcher_path_win = get_windows_path_from_wsl_path(batch_launcher_path)
 
         windows_lnk = create_shortcut(
             shortcut_path,
             "wscript",
-            '"%s" "%s"' % (silent_launcher_script_file_win, launcher_path_win),
+            '"%s" "%s"' % (silent_launcher_script_file_win, batch_launcher_path_win),
             entry.getComment(),
             ico_file_winpath
         )
