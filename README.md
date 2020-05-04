@@ -4,7 +4,7 @@ This script will create a Windows toolbar launcher for an underlying WSL install
 can be used to fire up linux native applications directly from Windows via the standard
 Windows toolbar, like this:
 
-![Demo](assets/demo.gif)
+![Demo](https://github.com/cascadium/wsl-windows-toolbar-launcher/raw/master/assets/demo.gif)
 
 It's particularly cool because WSL 2 is coming which is unlocking unprecedented performance
 and compatibility improvements, so this will literally bring the full suite of Linux GUI
@@ -19,6 +19,11 @@ The script expects to be run **within** the WSL execution environment with:
   must be *reachable* from your WSL env (test with something like `wsl.exe -- source ~/.bashrc ; xterm"`).
   If this fails, check your `DISPLAY` variable (more details in [troubleshooting](#troubleshooting)).
 * A desktop environment which has a freedesktop menu installed (e.g. gnome / xfce).
+
+And optionally (but recommended):
+
+* An installation of cairosvg if works on your distro (`pip install cairosvg`)
+* Imagemagick installed (`sudo apt install imagemagick` / `dnf install imagemagick` etc)
 
 ## Installing and Running
 
@@ -121,7 +126,7 @@ Then you need to worry about the firewall. WSL comes up as a public network, but
 allowing all public network traffic to access your X server. So instead, you can go ahead and select
 defaults when this sort of prompt comes up:
 
-![Security Alert](assets/security_alert.png)
+![Security Alert](https://github.com/cascadium/wsl-windows-toolbar-launcher/raw/master/assets/security_alert.png)
 
 Now, irritatingly this will actively add a block rule (rather than simply not add an allow rule) for public networks
 which you will need to disable for the next step by going into Windows Defender Firewall -> Inbound Rules and
@@ -135,7 +140,7 @@ from the WSL subnet. So refresh the list, scroll to your recently created name, 
 under `Scope`, go to **Remote IP address**, Select `These IP addresses` and add in `172.16.0.0/12` to limit the subnets
 which can access this port to the WSL subnet. It should look something like this:
 
-![WSL Subnet Firewall Rule](assets/firewall_rule_wsl_subnet.png)
+![WSL Subnet Firewall Rule](https://github.com/cascadium/wsl-windows-toolbar-launcher/raw/master/assets/firewall_rule_wsl_subnet.png)
 
 Alternatively you *could* just disable the entire firewall for WSL, but that adds a firewall warning that constantly
 irritates me:
