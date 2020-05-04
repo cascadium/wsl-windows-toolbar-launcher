@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="wsl-windows-toolbar",
-    version="0.4.1",
+    version="0.5.0",
     author="Frank Quinn",
     author_email="fquinn@cascadium.io",
     description="Adds linux GUI application menu to a windows toolbar",
@@ -22,13 +22,13 @@ setuptools.setup(
     url="http://cascadium.io",
     python_requires='>=3',
     install_requires=[
-        "click",
-        "pyxdg",
-        "winshell",
-        "swinlnk",
-        "pillow",
-        "python-magic",
-        "jinja2"
+        "click>=7",
+        "pyxdg>=0.26",
+        "winshell>=0.6",
+        "swinlnk>=0.1.4",
+        "pillow>=6",
+        "python-magic>=0.4.15",
+        "jinja2>=2.11"
     ],
     packages=[
         "wsl_windows_toolbar"
