@@ -29,7 +29,7 @@ And optionally (but recommended):
 
 To install:
 
-    python3 -m pip install git+https://github.com/cascadium/wsl-windows-toolbar-launcher#egg=wsl-windows-toolbar
+    pip install wsl-windows-toolbar
 
 To run:
 
