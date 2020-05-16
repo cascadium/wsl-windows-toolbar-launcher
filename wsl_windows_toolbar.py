@@ -336,6 +336,7 @@ def create_shortcut(link_file, executable, arguments=None, comment=None, icon_fi
     powershell_cmd += '$s.TargetPath = "%s";' % executable
     powershell_cmd += '$s.Arguments = "%s";' % arguments.replace('"', '`"')
     powershell_cmd += '$s.Description = "%s";' % comment
+    powershell_cmd += '$s.WorkingDirectory = "%USERPROFILE%";'
     powershell_cmd += '$s.IconLocation = "%s";' % icon_file
     powershell_cmd += '$s.Save()'
     powershell_cmd += "'"
