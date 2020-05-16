@@ -55,36 +55,62 @@ Notable changes:
 
 ```
 $ python wsl-windows-toolbar.py  --help
-Usage: wsl-windows-toolbar.py [OPTIONS]
+Usage: wsl_windows_toolbar.py [OPTIONS]
 
 Options:
-  -i, --install-directory PATH   Install the launcher targets to this
-                                 directory (<target> will be suffixed to this
-                                 location)
-  -m, --metadata-directory PATH  Install the launcher targets to this
-                                 directory (<target> will be suffixed to this
-                                 location)
-  -d, --distribution TEXT        WSL Distro to generate shortcuts for (will
-                                 use default distro if this parameter is not
-                                 provided)
-  -u, --user TEXT                WSL Distro's user to launch programs as (will
-                                 use default user if this parameter is not
-                                 provided)
-  -y, --confirm-yes              Assume the answer to all confirmation prompts
-                                 is 'yes'
-  -f, --menu-file FILENAME       The *.menu menu file to parse
-  -w, --wsl-executable TEXT      Path to the WSL executable relative to the
-                                 windows installation
-  -n, --target-name TEXT         Name to give to the created installation
-                                 (will be displayed in toolbar menu)
-  --help                         Show this message and exit.
+  -i, --install-directory PATH    Install the launchers here [default:
+                                  /c/Users/$USER/.config/wsl-windows-toolbar-
+                                  launcher/metadata]
+  -m, --metadata-directory PATH   Install any metadata here [default:
+                                  /c/Users/$USER/.config/wsl-windows-toolbar-
+                                  launcher/metadata]
+  -d, --distribution TEXT         WSL Distro to generate shortcuts for
+                                  [default: $WSL_DISTRO_NAME]
+  -u, --user TEXT                 WSL Distro's user to launch programs as
+                                  [default: $USER]
+  -y, --confirm-yes               Assume the answer to all confirmation
+                                  prompts is 'yes'  [default: False]
+  -f, --menu-file FILENAME        The *.menu menu file to parse  [default:
+                                  /etc/xdg/menus/gnome-applications.menu]
+  -w, --wsl-executable TEXT       Path to the WSL executable relative to the
+                                  windows installation  [default:
+                                  C:\Windows\System32\wsl.exe]
+  -n, --target-name TEXT          Name to give to the created installation
+                                  (will be displayed in toolbar menu)
+                                  [default: WSL]
+  -t, --preferred-theme TEXT      Preferred menu theme to use  [default:
+                                  Adwaita]
+  -T, --alternative-theme TEXT    Alternative menu themes to consider (pass
+                                  multiple times)  [default: Papirus,
+                                  Humanity, elementary-xfce]
+  -j, --jinja-template-batch FILENAME
+                                  Optional Jinja template to use instead of
+                                  the inbuilt default (advanced users only)
+  -J, --jinja-template-shell FILENAME
+                                  Optional Jinja template to use instead of
+                                  the inbuilt default (advanced users only)
+  -r, --rc-file FILENAME          Optional rc file to source prior to
+                                  launching the command instead of ~/.bashrc
 ```
 
-### Launcher Templates
+### Advanced Launcher Behaviour
 
-The loader process involves using wscript to launch a batch file (to keep the shorcut command
-length down). There is a jinja template which defines this script which defaults to
-`wsl-windows-toolbar-template.j2` and accepts the following possible variables passed
+The launcher process is fairly broken down to separate responsibilities and allow customizations
+at several layers. It looks like this:
+
+    lnk -> vbscript (sometimes) -> bat -> wsl bash -> app
+
+The `.lnk` is the shortcut with the icon etc. The vbscript exists only to launch the batch file
+without a terminal window appearing. The batch file bootstraps the wsl bash script using `wsl.exe`
+which in turn (finally) launches the app. It may seem convoluted but I have found this is the
+easiest way to break it down to allow flexibility and ease of maintenance at each layer.
+
+Note the vbscript is only called if `run_in_terminal` is set to false (as it tends to be for most
+applications). The templates which define the batch and bash files are used may be overridden
+by `-j` and `-J` respectively, though you shouldn't usually need to override this behaviour.
+
+The default templates used are `wsl-windows-toolbar-template.bat.j2` and
+`wsl-windows-toolbar-template.sh.j2`. The following possible variables passed
 through from the script:
 
 * `distribution`: The distribution selected in the script
@@ -92,6 +118,9 @@ through from the script:
 * `command`: The individual command for each launcher entry in WSL environment (e.g. `xterm`)
 * `wsl`: The wsl executable discovered
 * `rcfile`: The rc file (e.g. `.bashrc`) to source prior to launch selected in the script
+* `launch_script`: The path of the linux launcher script
+* `exec_dir`: The directory in which this command will be run (linux path)
+* `run_in_terminal`: Boolean specifying whether or not this app expects to run in a terminal
 
 ## Troubleshooting
 
