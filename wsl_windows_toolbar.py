@@ -260,6 +260,8 @@ def cli(install_directory,
     for path, entry in entries.items():
         logger.info("Creating menu item for: %s", path)
         exec_cmd = entry.getExec()
+        # https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#key-path
+        exec_dir = entry.getPath()
 
         # These parts aren't relevant for menu launcher so prune out from the command
         for substr in FREEDESKTOP_FIELD_CODES:
@@ -287,7 +289,8 @@ def cli(install_directory,
             "command": exec_cmd,
             "wsl": wsl_executable,
             "rcfile": rc_file.name,
-            "launch_script": shell_launcher_path
+            "launch_script": shell_launcher_path,
+            "exec_dir": exec_dir
         }
 
         # Create a little shell launcher for the executable
