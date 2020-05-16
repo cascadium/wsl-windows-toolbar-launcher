@@ -309,7 +309,6 @@ def cli(install_directory,
         batch_launcher_path_win = get_windows_path_from_wsl_path(batch_launcher_path)
 
         if run_in_terminal:
-            logger.info("PATH WIN: %s", batch_launcher_path_win)
             windows_lnk = create_shortcut(
                 shortcut_path,
                 batch_launcher_path_win,
