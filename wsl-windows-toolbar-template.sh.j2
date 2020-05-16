@@ -2,10 +2,17 @@
 
 source {{rcfile}}
 
-{%- if exec_dir is defined and exec_dir != "" %}
+{% if exec_dir is defined and exec_dir != "" %}
 cd "{{exec_dir}}"
-{% endif -%}
+{% endif %}
+
+{% if exec_dir is defined and exec_dir != "" %}
 
 {{command}} > /dev/null 2>&1 &
-
 disown
+
+{% else %}
+
+{{command}}
+
+{% endif %}
