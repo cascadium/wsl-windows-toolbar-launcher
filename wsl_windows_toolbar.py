@@ -262,6 +262,8 @@ def cli(install_directory,
         exec_cmd = entry.getExec()
         # https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#key-path
         exec_dir = entry.getPath()
+        # https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#key-terminal
+        run_in_terminal = entry.getTerminal()
 
         # These parts aren't relevant for menu launcher so prune out from the command
         for substr in FREEDESKTOP_FIELD_CODES:
@@ -290,7 +292,8 @@ def cli(install_directory,
             "wsl": wsl_executable,
             "rcfile": rc_file.name,
             "launch_script": shell_launcher_path,
-            "exec_dir": exec_dir
+            "exec_dir": exec_dir,
+            "run_in_terminal": run_in_terminal
         }
 
         # Create a little shell launcher for the executable
@@ -305,13 +308,22 @@ def cli(install_directory,
             script_handle.write(batch_template.render(template_dict))
         batch_launcher_path_win = get_windows_path_from_wsl_path(batch_launcher_path)
 
-        windows_lnk = create_shortcut(
-            shortcut_path,
-            "wscript",
-            '"%s" "%s"' % (silent_launcher_script_file_win, batch_launcher_path_win),
-            entry.getComment(),
-            ico_file_winpath
-        )
+        if run_in_terminal:
+            logger.info("PATH WIN: %s", batch_launcher_path_win)
+            windows_lnk = create_shortcut(
+                shortcut_path,
+                batch_launcher_path_win,
+                comment=entry.getComment(),
+                icon_file=ico_file_winpath
+            )
+        else:
+            windows_lnk = create_shortcut(
+                shortcut_path,
+                "wscript",
+                '"%s" "%s"' % (silent_launcher_script_file_win, batch_launcher_path_win),
+                comment=entry.getComment(),
+                icon_file=ico_file_winpath
+            )
         logger.debug("Created %s", windows_lnk)
         shortcuts_installed += 1
 
@@ -330,7 +342,7 @@ def get_windows_path_from_wsl_path(path):
     )
 
 
-def create_shortcut(link_file, executable, arguments=None, comment=None, icon_file=None):
+def create_shortcut(link_file, executable, arguments="", comment="", icon_file=""):
     windows_lnk = get_windows_path_from_wsl_path(link_file)
     powershell_cmd = "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile "
     powershell_cmd += "-Command '"
