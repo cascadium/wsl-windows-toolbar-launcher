@@ -91,6 +91,10 @@ Options:
                                   the inbuilt default (advanced users only)
   -r, --rc-file FILENAME          Optional rc file to source prior to
                                   launching the command instead of ~/.bashrc
+  -D, --launch-directory DIRECTORY
+                                  Optional default linux path to open
+                                  applications relative to (defaults to ~)
+  --help                          Show this message and exit.
 ```
 
 ### Advanced Launcher Behaviour
