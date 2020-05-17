@@ -158,6 +158,12 @@ except:
               default=os.path.expanduser("~/.bashrc"),
               show_default=False,
               help="Optional rc file to source prior to launching the command instead of ~/.bashrc")
+@click.option("--launch-directory",
+              "-D",
+              type=click.Path(exists=True, file_okay=False),
+              default=os.path.expanduser("~"),
+              show_default=False,
+              help="Optional default linux path to open applications relative to (defaults to ~)")
 def cli(install_directory,
         metadata_directory,
         distribution,
@@ -170,7 +176,8 @@ def cli(install_directory,
         alternative_theme,
         jinja_template_batch,
         jinja_template_shell,
-        rc_file):
+        rc_file,
+        launch_directory):
 
     # Debug information
     logger.info("distribution = %s", distribution)
@@ -186,6 +193,7 @@ def cli(install_directory,
     logger.info("rc_file = %s", rc_file.name)
     logger.info("has_imagemagick = %s", has_imagemagick)
     logger.info("has_cairosvg = %s", has_cairosvg)
+    logger.info("launch_directory = %s", launch_directory)
 
     # Check required tools are available
     for exe in ["powershell.exe", "wscript.exe", "wslpath", "convert"]:
@@ -264,6 +272,9 @@ def cli(install_directory,
         exec_dir = entry.getPath()
         # https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#key-terminal
         run_in_terminal = entry.getTerminal()
+
+        if not exec_dir:
+            exec_dir = launch_directory
 
         # These parts aren't relevant for menu launcher so prune out from the command
         for substr in FREEDESKTOP_FIELD_CODES:
