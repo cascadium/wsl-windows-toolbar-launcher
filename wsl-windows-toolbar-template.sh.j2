@@ -3,16 +3,18 @@
 source {{rcfile}}
 
 {% if exec_dir is defined and exec_dir != "" %}
+
 cd "{{exec_dir}}"
+
 {% endif %}
 
-{% if exec_dir is defined and exec_dir != "" %}
+{% if run_in_terminal is defined and run_in_terminal == True %}
 
-{{command}} > /dev/null 2>&1 &
-disown
+{{command}}
 
 {% else %}
 
-{{command}}
+{{command}} > /dev/null 2>&1 &
+disown
 
 {% endif %}
