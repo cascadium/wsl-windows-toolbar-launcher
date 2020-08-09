@@ -164,6 +164,18 @@ except:
               default=os.path.expanduser("~"),
               show_default=False,
               help="Optional default linux path to open applications relative to (defaults to ~)")
+@click.option("--batch-encoding",
+              "-E",
+              type=str,
+              default=None,
+              show_default=False,
+              help="Optional batch file output encoding (defaults to None)")
+@click.option("--use-batch-newline-crlf",
+              "-N",
+              is_flag=True,
+              default=False,
+              show_default=False,
+              help="Optional use batch file newline value CRLF (defaults to False)")
 def cli(install_directory,
         metadata_directory,
         distribution,
@@ -177,7 +189,9 @@ def cli(install_directory,
         jinja_template_batch,
         jinja_template_shell,
         rc_file,
-        launch_directory):
+        launch_directory,
+        batch_encoding,
+        use_batch_newline_crlf):
 
     # Debug information
     logger.info("distribution = %s", distribution)
@@ -194,6 +208,8 @@ def cli(install_directory,
     logger.info("has_imagemagick = %s", has_imagemagick)
     logger.info("has_cairosvg = %s", has_cairosvg)
     logger.info("launch_directory = %s", launch_directory)
+    logger.info("batch_encoding = %s", batch_encoding)
+    logger.info("use_batch_newline_crlf = %s", use_batch_newline_crlf)
 
     # Check required tools are available
     for exe in ["powershell.exe", "wscript.exe", "wslpath", "convert"]:
@@ -315,7 +331,8 @@ def cli(install_directory,
 
         # Create a little batch file launcher for the executable
         batch_launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
-        with open(batch_launcher_path, mode="w") as script_handle:
+        batch_newline = "\r\n" if use_batch_newline_crlf else None
+        with open(batch_launcher_path, mode="w", encoding=batch_encoding, newline=batch_newline) as script_handle:
             script_handle.write(batch_template.render(template_dict))
         batch_launcher_path_win = get_windows_path_from_wsl_path(batch_launcher_path)
 
