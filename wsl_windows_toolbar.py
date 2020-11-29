@@ -28,7 +28,7 @@ if uname().system != "Linux" or "microsoft" not in uname().release:
     exit(1)
 
 # Check required tools are available
-for exe in ["cmd.exe", "powershell.exe", "wscript.exe", "wslpath"]:
+for exe in ["cmd.exe", "attrib.exe", "powershell.exe", "wscript.exe", "wslpath"]:
     # Just check for non zero return codes
     logger.debug("Checking availability of %s...", exe)
     try:
@@ -254,6 +254,9 @@ def cli(install_directory,
         logger.error("No permissions to create directories %s or %s - aborting", install_directory, metadata_directory)
         sys.exit(os.EX_NOPERM)
 
+    # Make metadata a hidden system file to hide it from indexer (cleaner search results for powertoys etc)
+    set_hidden_from_indexer(metadata_directory)
+
     # Check we have absolute ownership of this directory - if not, chicken out
     if not is_directory_writable(install_directory):
         logger.error("Could not confirm write access to all contents of %s - aborting", install_directory)
@@ -338,6 +341,7 @@ def cli(install_directory,
             script_handle.write(shell_template.render(template_dict))
         # Make executable
         os.chmod(shell_launcher_path, 509)
+        set_hidden_from_indexer(shell_launcher_path)
 
         # Create a little batch file launcher for the executable
         batch_launcher_path = os.path.join(metadata_directory, "%s.bat" % path)
@@ -361,6 +365,7 @@ def cli(install_directory,
                 comment=entry.getComment(),
                 icon_file=ico_file_winpath
             )
+        set_hidden_from_indexer(batch_launcher_path)
         logger.debug("Created %s", windows_lnk)
         shortcuts_installed += 1
 
@@ -395,6 +400,14 @@ def create_shortcut(link_file, executable, arguments="", comment="", icon_file="
     logger.debug("Powershell command to create shortcut: %s", powershell_cmd)
     os.popen(powershell_cmd).read().rstrip()
     return windows_lnk
+
+
+def set_hidden_from_indexer(path):
+    try:
+        subprocess.check_output(["attrib.exe", "+I", "+S", "+H", get_windows_path_from_wsl_path(path)])
+        logger.debug("Set hidden system attributes in metadata directory %s", path)
+    except subprocess.CalledProcessError:
+        logger.exception("Failed to set hidden system attributes in metadata directory %s", path)
 
 
 def create_windows_icon(icon,
@@ -450,6 +463,9 @@ def create_windows_icon(icon,
                 ico_file = metadata_prefix + ".ico"
                 img.save(ico_file)
                 logger.debug("Successfully created %s", ico_file)
+                # Mark both icon and png as system
+                set_hidden_from_indexer(png_file)
+                set_hidden_from_indexer(ico_file)
                 return get_windows_path_from_wsl_path(ico_file)
             except Exception:
                 logger.warning("Could not generate icon for %s", png_file)
