@@ -90,7 +90,7 @@ except ImportError:
 try:
     if 'ImageMagick' in subprocess.check_output(["convert", "-version"]).rstrip().decode():
         has_imagemagick = True
-except:
+except Exception:
     logger.warning("Could not find imagemagick - some xpm icons may not convert correctly")
     pass
 
