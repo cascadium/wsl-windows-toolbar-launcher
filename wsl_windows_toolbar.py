@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import sys
 import magic
-
+from platform import uname
 import click
 from PIL import Image
 # Set up default logging format and level
@@ -15,14 +15,38 @@ import xdg.IconTheme
 from click._compat import raw_input
 from jinja2 import Environment, PackageLoader, FileSystemLoader
 
-DEFAULT_HOST_MOUNTPOINT = "/mnt/c"
-with open("/proc/mounts") as mount_fh:
-    for mount in mount_fh.readlines():
-        fs, mp, typ, opts, dump, pas = mount.rstrip().split()
-        if typ in ["drvfs", "9p"]:
-            DEFAULT_HOST_MOUNTPOINT = mp
 
-# WINDOWS_USERPROFILE
+logging.basicConfig(level=logging.INFO, format='%(asctime)s[%(levelname)s]: %(message)s')
+logger = logging.getLogger(__name__)
+
+# Pre-run checks up here
+if uname().system != "Linux" or "microsoft" not in uname().release:
+    logger.error("WSL Linux environment required (detected: %s [%s])" %
+                 uname().system,
+                 uname().release
+                 )
+    exit(1)
+
+# Check required tools are available
+for exe in ["cmd.exe", "powershell.exe", "wscript.exe", "wslpath"]:
+    # Just check for non zero return codes
+    logger.debug("Checking availability of %s...", exe)
+    try:
+        proc = subprocess.check_output(["which", exe])
+        logger.debug("Found: %s", proc.rstrip().decode())
+    except subprocess.CalledProcessError:
+        logger.error("The %s application must be in the current user's executable $PATH.", exe)
+        sys.exit(os.EX_UNAVAILABLE)
+
+PROC_MOUNTS = "/proc/mounts"
+DEFAULT_HOST_MOUNTPOINT = "/mnt/c"
+if os.path.exists(PROC_MOUNTS):
+    with open(PROC_MOUNTS) as mount_fh:
+        for mount in mount_fh.readlines():
+            fs, mp, typ, opts, dump, pas = mount.rstrip().split()
+            if typ in ["drvfs", "9p"]:
+                DEFAULT_HOST_MOUNTPOINT = mp
+
 WINDOWS_USERPROFILE = subprocess.check_output(
     ["cmd.exe", "/C", "echo", "%USERPROFILE%"],
     stderr=subprocess.DEVNULL
@@ -51,9 +75,6 @@ FREEDESKTOP_FIELD_CODES = [
     "%v",
     "%m"
 ]
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s[%(levelname)s]: %(message)s')
-logger = logging.getLogger(__name__)
 
 # Default environment detection for optional extras
 has_cairosvg = False
@@ -210,17 +231,6 @@ def cli(install_directory,
     logger.info("launch_directory = %s", launch_directory)
     logger.info("batch_encoding = %s", batch_encoding)
     logger.info("use_batch_newline_crlf = %s", use_batch_newline_crlf)
-
-    # Check required tools are available
-    for exe in ["powershell.exe", "wscript.exe", "wslpath", "convert"]:
-        # Just check for non zero return codes
-        logger.debug("Checking availability of %s...", exe)
-        try:
-            proc = subprocess.check_output(["which", exe])
-            logger.debug("Found: %s", proc.rstrip().decode())
-        except subprocess.CalledProcessError:
-            logger.error("The %s application must be in the current user's executable path.", exe)
-            sys.exit(os.EX_UNAVAILABLE)
 
     # Add distro to directory names, since we want to support multiple concurrent distributions
     install_directory = os.path.join(install_directory, target_name)
