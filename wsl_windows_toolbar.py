@@ -14,6 +14,7 @@ import xdg.Menu
 import xdg.IconTheme
 from click._compat import raw_input
 from jinja2 import Environment, PackageLoader, FileSystemLoader
+from lnk_utils import create_shortcut
 
 DEFAULT_HOST_MOUNTPOINT = "/mnt/c"
 with open("/proc/mounts") as mount_fh:
@@ -319,20 +320,27 @@ def cli(install_directory,
             script_handle.write(batch_template.render(template_dict))
         batch_launcher_path_win = get_windows_path_from_wsl_path(batch_launcher_path)
 
+        windows_lnk = get_windows_path_from_wsl_path(shortcut_path)
+
+        print("WINDOWS LINK: {}".format(windows_lnk))
         if run_in_terminal:
             windows_lnk = create_shortcut(
-                shortcut_path,
-                batch_launcher_path_win,
-                comment=entry.getComment(),
-                icon_file=ico_file_winpath
+                executable="C:\\Windows\\System32\\notepad.exe",
+                link_file=shortcut_path,
+                # executable=batch_launcher_path_win,
+                #comment=entry.getComment(),
+                #icon_file=ico_file_winpath
             )
         else:
             windows_lnk = create_shortcut(
-                shortcut_path,
-                "wscript",
-                '"%s" "%s"' % (silent_launcher_script_file_win, batch_launcher_path_win),
-                comment=entry.getComment(),
-                icon_file=ico_file_winpath
+                #executable="C:\\Windows\\System32\\notepad.exe",
+                executable="C:\\Users\\fquinn\\.config\\wsl-windows-toolbar-launcher\\metadata\\TEST2\\Accessories\\About Xfce.bat",
+                link_file=shortcut_path,
+                # #executable = "..\\..\\..\\..\\..\\..\\..\\Windows\\system32\\wscript.exe",
+                # executable="C:\\Windows\\system32\\wscript.exe",
+                # arguments='"%s" "%s"' % (silent_launcher_script_file_win, batch_launcher_path_win),
+                # comment=entry.getComment(),
+                # icon_file=ico_file_winpath
             )
         logger.debug("Created %s", windows_lnk)
         shortcuts_installed += 1
@@ -350,24 +358,6 @@ def get_windows_path_from_wsl_path(path):
         subprocess.check_output(["wslpath", "-w", "-a", os.path.dirname(path)]).rstrip().decode(),
         os.path.basename(path)
     )
-
-
-def create_shortcut(link_file, executable, arguments="", comment="", icon_file=""):
-    windows_lnk = get_windows_path_from_wsl_path(link_file)
-    powershell_cmd = "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile "
-    powershell_cmd += "-Command '"
-    powershell_cmd += '$ws = New-Object -ComObject WScript.Shell; '
-    powershell_cmd += '$s = $ws.CreateShortcut("%s");' % windows_lnk
-    powershell_cmd += '$s.TargetPath = "%s";' % executable
-    powershell_cmd += '$s.Arguments = "%s";' % arguments.replace('"', '`"')
-    powershell_cmd += '$s.Description = "%s";' % comment
-    powershell_cmd += '$s.WorkingDirectory = "%USERPROFILE%";'
-    powershell_cmd += '$s.IconLocation = "%s";' % icon_file
-    powershell_cmd += '$s.Save()'
-    powershell_cmd += "'"
-    logger.debug("Powershell command to create shortcut: %s", powershell_cmd)
-    os.popen(powershell_cmd).read().rstrip()
-    return windows_lnk
 
 
 def create_windows_icon(icon,
