@@ -436,9 +436,9 @@ def create_windows_icon(icon,
             if has_imagemagick:
                 logger.debug("Could not convert using python methods - falling back on imagemagick")
                 try:
-                    subprocess.check_output(["convert", icon_path, png_file])
+                    subprocess.check_output(["convert", icon_path, png_file], timeout=10)
                     logger.debug("Converted %s to %s using imagemagick", icon_path, png_file)
-                except subprocess.CalledProcessError:
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
                     logger.exception("Failed to create or find png file for %s - icon will not be available (%s: %s)",
                                      icon_path, type(e).__name__, e)
                     png_file = None
