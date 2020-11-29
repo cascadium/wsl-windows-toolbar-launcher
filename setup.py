@@ -1,5 +1,6 @@
 import setuptools
 import sys
+from platform import uname
 
 if sys.version_info.major <= 2:
     sys.stderr.write("Python >=3 required (detected: %s.%s.x)" % (
@@ -8,12 +9,19 @@ if sys.version_info.major <= 2:
     ))
     exit(1)
 
+if uname().system != "Linux" or "microsoft" not in uname().release:
+    sys.stderr.write("WSL Linux environment required (detected: %s [%s])" % (
+        uname().system,
+        uname().release
+    ))
+    exit(1)
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="wsl-windows-toolbar",
-    version="0.5.5",
+    version="0.6.0",
     author="Frank Quinn",
     author_email="fquinn@cascadium.io",
     description="Adds linux GUI application menu to a windows toolbar",
