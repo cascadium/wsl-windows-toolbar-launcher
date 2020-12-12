@@ -5,6 +5,7 @@ import logging
 import shutil
 import subprocess
 import sys
+import glob
 import magic
 from platform import uname
 import click
@@ -57,6 +58,26 @@ WSL_USERPROFILE = subprocess.check_output(
 
 DEFAULT_INSTALL_DIRECTORY = os.path.join(
     WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/menus")
+DEFAULT_METADATA_DIRECTORY = os.path.join(
+    WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/metadata")
+
+# Default order of preference for menu selection
+MENU_PREFERENCES = ["gnome", "xfce", "kf5"]
+DEFAULT_MENU_LOCATION = "/etc/xdg/menus"
+MENUS_AVAILABLE = glob.glob("%s/*-applications.menu" % DEFAULT_MENU_LOCATION)
+DEFAULT_MENU_FILE = None
+
+# Prefer these as defaults if available
+for menu_type in MENU_PREFERENCES:
+    menu_file_name = "/etc/xdg/menus/%s-applications.menu" % menu_type
+    if menu_file_name in MENUS_AVAILABLE:
+        DEFAULT_MENU_FILE = menu_file_name
+        break
+
+# Otherwise prefer the first one available
+if DEFAULT_MENU_FILE is None and len(MENUS_AVAILABLE) > 0:
+    DEFAULT_MENU_FILE = MENUS_AVAILABLE[0]
+
 DEFAULT_METADATA_DIRECTORY = os.path.join(
     WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/metadata")
 
@@ -129,7 +150,7 @@ except Exception:
 @click.option("--menu-file",
               "-f",
               type=click.File('r'),
-              default="/etc/xdg/menus/gnome-applications.menu",
+              default=DEFAULT_MENU_FILE,
               show_default=True,
               help="The *.menu menu file to parse")
 @click.option("--wsl-executable",
@@ -218,7 +239,7 @@ def cli(install_directory,
     logger.info("distribution = %s", distribution)
     logger.info("user = %s", user)
     logger.info("confirm_yes = %s", confirm_yes)
-    logger.info("menu_file = %s", menu_file.name)
+    logger.info("menu_file = %s", menu_file.name if menu_file else None)
     logger.info("wsl_executable = %s", wsl_executable)
     logger.info("target_name = %s", target_name)
     logger.info("preferred_theme = %s", preferred_theme)
@@ -239,6 +260,13 @@ def cli(install_directory,
     # OK print it debug information for these now
     logger.info("install_directory = %s", install_directory)
     logger.info("metadata_directory = %s", metadata_directory)
+
+    if not menu_file:
+        logger.error(
+            "Could not find an appropriate .menu file in %s - perhaps yum/apt install gnome-menus or another desktop?",
+            DEFAULT_MENU_LOCATION
+        )
+        sys.exit(os.EX_OSFILE)
 
     if not confirm_yes:
         logger.info("For full list of options available, call script again with --help")

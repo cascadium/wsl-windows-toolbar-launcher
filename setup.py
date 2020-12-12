@@ -21,7 +21,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="wsl-windows-toolbar",
-    version="0.6.0",
+    version="0.6.1",
     author="Frank Quinn",
     author_email="fquinn@cascadium.io",
     description="Adds linux GUI application menu to a windows toolbar",
