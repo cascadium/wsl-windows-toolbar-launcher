@@ -18,12 +18,14 @@ The script expects to be run **within** the WSL execution environment with:
 * An **X11 Server** running on your **windows host** (e.g. X410, Xming etc). This server
   must be *reachable* from your WSL env (test with something like `wsl.exe -- source ~/.bashrc ; xterm"`).
   If this fails, check your `DISPLAY` variable (more details in [troubleshooting](#troubleshooting)).
-* A desktop environment which has a freedesktop menu installed (e.g. gnome / xfce).
+* A freedesktop menu installed (e.g. gnome-menus or a full desktop environment).
 
 And optionally (but recommended):
 
-* An installation of cairosvg if works on your distro (`pip install cairosvg`)
-* Imagemagick installed (`sudo apt install imagemagick` / `dnf install imagemagick` etc)
+* An installation of cairosvg if works on your distro (`pip install cairosvg`). This will allow you to convert `.svg`
+  based icons.
+* Imagemagick installed (`sudo apt install imagemagick` / `dnf install imagemagick` etc). This will allow you to have
+  an additional opportunity to convert appropriate icon files if other methods fail.
 
 ## Installing and Running
 
