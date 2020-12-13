@@ -22,10 +22,9 @@ logger = logging.getLogger(__name__)
 
 # Pre-run checks up here
 if uname().system != "Linux" or "microsoft" not in uname().release:
-    logger.error("WSL Linux environment required (detected: %s [%s])" %
+    logger.error("WSL Linux environment required (detected: %s [%s])",
                  uname().system,
-                 uname().release
-                 )
+                 uname().release)
     exit(1)
 
 # Check required tools are available
