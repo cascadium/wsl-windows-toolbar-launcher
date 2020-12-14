@@ -9,7 +9,7 @@ if sys.version_info.major <= 2:
     ))
     exit(1)
 
-if uname().system != "Linux" or "microsoft" not in uname().release:
+if uname().system.upper() != "LINUX" or "MICROSOFT" not in uname().release.upper():
     sys.stderr.write("WSL Linux environment required (detected: %s [%s])" % (
         uname().system,
         uname().release
@@ -21,7 +21,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="wsl-windows-toolbar",
-    version="0.6.2",
+    version="0.6.3",
     author="Frank Quinn",
     author_email="fquinn@cascadium.io",
     description="Adds linux GUI application menu to a windows toolbar",
