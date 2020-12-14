@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s[%(levelname)s]: %(me
 logger = logging.getLogger(__name__)
 
 # Pre-run checks up here
-if uname().system != "Linux" or "microsoft" not in uname().release:
+if uname().system.upper() != "LINUX" or "MICROSOFT" not in uname().release.upper():
     logger.error("WSL Linux environment required (detected: %s [%s])",
                  uname().system,
                  uname().release)
