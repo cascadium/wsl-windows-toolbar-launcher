@@ -14,7 +14,7 @@ applications directly to Windows UI.
 
 The script expects to be run **within** the WSL execution environment with:
 
-* A complete WSL install ready with bash and python3 installed.
+* A complete WSL install ready with bash, python3 and python3-pip installed.
 * An **X11 Server** running on your **windows host** (e.g. X410, Xming etc). This server
   must be *reachable* from your WSL env (test with something like `wsl.exe -- source ~/.bashrc ; xterm"`).
   If this fails, check your `DISPLAY` variable (more details in [troubleshooting](#troubleshooting)).
@@ -22,7 +22,7 @@ The script expects to be run **within** the WSL execution environment with:
 
 And optionally (but recommended):
 
-* An installation of cairosvg if works on your distro (`pip install cairosvg`). This will allow you to convert `.svg`
+* An installation of cairosvg if works on your distro (`pip3 install cairosvg`). This will allow you to convert `.svg`
   based icons.
 * Imagemagick installed (`sudo apt install imagemagick` / `dnf install imagemagick` etc). This will allow you to have
   an additional opportunity to convert appropriate icon files if other methods fail.
@@ -31,7 +31,7 @@ And optionally (but recommended):
 
 To install:
 
-    pip install wsl-windows-toolbar
+    pip3 install wsl-windows-toolbar
 
 To run:
 
