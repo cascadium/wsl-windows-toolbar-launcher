@@ -13,7 +13,7 @@ from PIL import Image
 # Set up default logging format and level
 import xdg.Menu
 import xdg.IconTheme
-from click._compat import raw_input
+from click import confirm
 from jinja2 import Environment, PackageLoader, FileSystemLoader
 
 
@@ -270,7 +270,7 @@ def cli(install_directory,
     if not confirm_yes:
         logger.info("For full list of options available, call script again with --help")
         logger.info("This script will write to the above locations if it can, but giving final chance to chicken out.")
-        raw_input("Press <enter> to continue or ctrl+c to abort.")
+        confirm("Press <enter> to continue or ctrl+c to abort.")
 
     # OK we're ready to go - ensure we can create / have write access to the installation directory
     try:
