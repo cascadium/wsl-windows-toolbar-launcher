@@ -1,8 +1,8 @@
-click
+click==7.1.2
 pyxdg
 winshell
 swinlnk
 pillow
 cairosvg
 python-magic
-jinja2
+jinja2==2.11.2
