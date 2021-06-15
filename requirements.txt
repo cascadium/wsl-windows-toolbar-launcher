@@ -5,4 +5,4 @@ swinlnk
 pillow
 cairosvg
 python-magic
-jinja2==2.11.2
+jinja2==2.11.3
