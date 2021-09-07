@@ -16,7 +16,7 @@ The script expects to be run **within** the WSL execution environment with:
 
 * A complete WSL install ready with bash, python3 and python3-pip installed.
 * An **X11 Server** running on your **windows host** (e.g. X410, Xming etc). This server
-  must be *reachable* from your WSL env (test with something like `wsl.exe -- source ~/.bashrc ; xterm"`).
+  must be *reachable* from your WSL env (test with something like `wsl.exe -- source ~/.bashrc ; xterm`).
   If this fails, check your `DISPLAY` variable (more details in [troubleshooting](#troubleshooting)).
 * A freedesktop menu installed (e.g. gnome-menus or a full desktop environment).
 
