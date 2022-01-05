@@ -180,7 +180,7 @@ which you will need to disable for the next step by going into Windows Defender 
 
 If you don't do the above step, the Block rule will take precedence over the Allow allow rule and you won't get through.
 
-Now, right click on Inbound Rules and select `New Rule...`, select TCP port 6000 (most likely) and select defaults. This
+Now, right click on Inbound Rules and select `New Rule...`, select TCP port 6000 (most likely, but verify with display number / X11 server documentation before continuing) and select defaults. This
 will open up your public network for this port... which is also not what you want. What you want is to only allow traffic
 from the WSL subnet. So refresh the list, scroll to your recently created name, right click and go to properties. Now
 under `Scope`, go to **Remote IP address**, Select `These IP addresses` and add in `172.16.0.0/12` to limit the subnets
