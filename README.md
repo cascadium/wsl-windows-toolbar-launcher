@@ -1,5 +1,16 @@
 # WSL Windows Toolbar Launcher
 
+## For Windows 11 Users, you probably don't need / want this project
+
+Unfortunately (or fortunately depending on your opinion - keep reading...) this script is of questionable value in Windows 11 since they neutered the taskbar (generally). I did test when the windows 10 insiders build had full wslg support and everything worked fine, but the windows 11 taskbar is now unrecognizable from that build and there is currently no way to add the toolbar in the way which this project expects.
+
+However as of Windows 11, this script is not actually required. If you run [powertoys](https://github.com/microsoft/PowerToys), you can enable **Powertoys Run** and use alt+space. Your GUI apps from your WSL installs will have shortcuts there with your distribution name in brackets as you launch them and you won't need to go looking for them in the traditional tree-based structure. Thanks to the new Windows 11 WSLG support, it should "just work" without any display magic or third party X11 servers.
+
+Note you may wait for the Windows indexer to refresh after you install a new app, but it will get there eventually automatically.
+
+
+## For Windows 10 Users
+
 This script will create a Windows toolbar launcher for an underlying WSL install which
 can be used to fire up linux native applications directly from Windows via the standard
 Windows toolbar, like this:
