@@ -1,3 +1,0 @@
-assets/demo.gif filter=lfs diff=lfs merge=lfs -text
-assets/firewall_rule_wsl_subnet.png filter=lfs diff=lfs merge=lfs -text
-assets/security_alert.png filter=lfs diff=lfs merge=lfs -text
