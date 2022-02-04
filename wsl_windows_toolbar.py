@@ -55,8 +55,19 @@ WSL_USERPROFILE = subprocess.check_output(
     ["wslpath", WINDOWS_USERPROFILE]
 ).rstrip().decode("utf-8")
 
+WINDOWS_USERAPPDATA = subprocess.check_output(
+    ["cmd.exe", "/C", "echo", "%APPDATA%"],
+    stderr=subprocess.DEVNULL
+).rstrip().decode("utf-8")
+WSL_USERAPPDATA = subprocess.check_output(
+    ["wslpath", WINDOWS_USERAPPDATA]
+).rstrip().decode("utf-8")
+
+# Install in the start menu
 DEFAULT_INSTALL_DIRECTORY = os.path.join(
-    WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/menus")
+    WSL_USERAPPDATA, "Microsoft", "Windows", "Start Menu", "Programs", "WSL Windows Toolbar")
+
+# Install metadata in our local .config directory
 DEFAULT_METADATA_DIRECTORY = os.path.join(
     WSL_USERPROFILE, ".config", "wsl-windows-toolbar-launcher/metadata")
 
@@ -121,13 +132,13 @@ except Exception:
               type=click.Path(),
               default=DEFAULT_INSTALL_DIRECTORY,
               show_default=False,
-              help="Install the launchers here [default: /c/Users/$USER/.config/wsl-windows-toolbar-launcher/metadata]")
+              help="Install the launchers here [default: %s]" % DEFAULT_INSTALL_DIRECTORY)
 @click.option("--metadata-directory",
               "-m",
               type=click.Path(),
               default=DEFAULT_METADATA_DIRECTORY,
               show_default=False,
-              help="Install any metadata here [default: /c/Users/$USER/.config/wsl-windows-toolbar-launcher/metadata]")
+              help="Install any metadata here [default: %s]" % DEFAULT_METADATA_DIRECTORY)
 @click.option("--distribution",
               "-d",
               type=str,
@@ -217,6 +228,12 @@ except Exception:
               default=False,
               show_default=False,
               help="Optional use batch file newline value CRLF (defaults to False)")
+@click.option("--shortcut-suffix",
+              "-s",
+              type=str,
+              default=None,
+              show_default=False,
+              help="String to add to end of shortcut name (defaults to ' (target name)')")
 def cli(install_directory,
         metadata_directory,
         distribution,
@@ -232,33 +249,37 @@ def cli(install_directory,
         rc_file,
         launch_directory,
         batch_encoding,
-        use_batch_newline_crlf):
+        use_batch_newline_crlf,
+        shortcut_suffix):
 
     # Debug information
-    logger.info("distribution = %s", distribution)
-    logger.info("user = %s", user)
+    logger.info("distribution = '%s'", distribution)
+    logger.info("user = '%s'", user)
     logger.info("confirm_yes = %s", confirm_yes)
-    logger.info("menu_file = %s", menu_file.name if menu_file else None)
-    logger.info("wsl_executable = %s", wsl_executable)
-    logger.info("target_name = %s", target_name)
-    logger.info("preferred_theme = %s", preferred_theme)
-    logger.info("alternative_theme = %s", alternative_theme)
-    logger.info("jinja_template_batch = %s", jinja_template_batch.name if jinja_template_batch else None)
-    logger.info("jinja_template_shell = %s", jinja_template_shell.name if jinja_template_shell else None)
-    logger.info("rc_file = %s", rc_file.name)
+    logger.info("menu_file = '%s'", menu_file.name if menu_file else None)
+    logger.info("wsl_executable = '%s'", wsl_executable)
+    logger.info("target_name = '%s'", target_name)
+    logger.info("preferred_theme = '%s'", preferred_theme)
+    logger.info("alternative_theme = '%s'", alternative_theme)
+    logger.info("jinja_template_batch = '%s'", jinja_template_batch.name if jinja_template_batch else None)
+    logger.info("jinja_template_shell = '%s'", jinja_template_shell.name if jinja_template_shell else None)
+    logger.info("rc_file = '%s'", rc_file.name)
     logger.info("has_imagemagick = %s", has_imagemagick)
     logger.info("has_cairosvg = %s", has_cairosvg)
-    logger.info("launch_directory = %s", launch_directory)
-    logger.info("batch_encoding = %s", batch_encoding)
+    logger.info("launch_directory = '%s'", launch_directory)
+    logger.info("batch_encoding = '%s'", batch_encoding)
     logger.info("use_batch_newline_crlf = %s", use_batch_newline_crlf)
+    if shortcut_suffix is None:
+        shortcut_suffix = " (%s)" % target_name
+    logger.info("shortcut_suffix = '%s'", shortcut_suffix)
 
     # Add distro to directory names, since we want to support multiple concurrent distributions
     install_directory = os.path.join(install_directory, target_name)
     metadata_directory = os.path.join(metadata_directory, target_name)
 
     # OK print it debug information for these now
-    logger.info("install_directory = %s", install_directory)
-    logger.info("metadata_directory = %s", metadata_directory)
+    logger.info("install_directory = '%s'", install_directory)
+    logger.info("metadata_directory = '%s'", metadata_directory)
 
     if not menu_file:
         logger.error(
@@ -337,7 +358,11 @@ def cli(install_directory,
             exec_cmd = exec_cmd.replace(substr, "")
 
         # Carve the way for the shortcut
-        shortcut_path = os.path.join(install_directory, "%s.lnk" % path)
+        if shortcut_suffix is None:
+            shortcut_path = os.path.join(install_directory, "%s.lnk" % path)
+        else:
+            shortcut_path = os.path.join(install_directory, "%s%s.lnk" % (path, shortcut_suffix))
+
         os.makedirs(os.path.dirname(shortcut_path), exist_ok=True)
         logger.debug("Will create shortcut file: %s", shortcut_path)
 
